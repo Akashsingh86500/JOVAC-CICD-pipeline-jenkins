@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 SERVICE=$1
-REPO_URL="REPLACE_WITH_YOUR_GITHUB_REPO"
+REPO_URL="https://github.com/Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git"
 WORKDIR="/opt/$SERVICE"
 if [ -z "$SERVICE" ]; then
   exit 1
