@@ -1,10 +1,5 @@
 pipeline {
-  agent {
-    docker {
-      image 'ubuntu:22.04'
-      args '--privileged -u root'
-    }
-  }
+  agent any
 
   environment {
     EC2_HOST = '54.252.194.194'
