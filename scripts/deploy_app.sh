@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -e
 
 SERVICE=${1:-}
 REPO_URL=${REPO_URL:-${2:-}}
