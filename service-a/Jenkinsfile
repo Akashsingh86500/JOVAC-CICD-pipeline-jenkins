@@ -25,7 +25,7 @@ pipeline {
         sshagent(credentials: [env.SSH_CREDENTIALS_ID]) {
           sh """
             ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \
-            \\"REPO_URL=${REPO_URL} bash -s service-a\\" < scripts/deploy_app.sh
+            "REPO_URL=${REPO_URL} bash -s service-a" < scripts/deploy_app.sh
           """
         }
       }
