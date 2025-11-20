@@ -1,6 +1,4 @@
 pipeline {
-  agent any
-
   environment {
     EC2_HOST = '54.252.194.194'
     SSH_CREDENTIALS_ID = 'EC2_PEM_KEY'
@@ -13,6 +11,7 @@ pipeline {
       steps {
         script {
           if (isUnix()) {
+           
             sh '''
               apt-get update || true
               apt-get install -y curl git ssh python3 python3-venv python3-pip || true
@@ -66,11 +65,11 @@ pipeline {
         sshagent (credentials: [env.SSH_CREDENTIALS_ID]) {
           script {
             if (isUnix()) {
-              sh "ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} 'bash -s' < scripts/deploy_app.sh service-a"
-              sh "ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} 'bash -s' < scripts/deploy_app.sh service-b"
+              sh "ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} 'REPO_URL=${REPO_URL} bash -s' < scripts/deploy_app.sh service-a"
+              sh "ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} 'REPO_URL=${REPO_URL} bash -s' < scripts/deploy_app.sh service-b"
             } else {
-              bat "type scripts\\deploy_app.sh | ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} 'bash -s'"
-              bat "type scripts\\deploy_app.sh | ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} 'bash -s' service-b"
+              bat "type scripts\\deploy_app.sh | ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} \"REPO_URL=${REPO_URL} bash -s\""
+              bat "type scripts\\deploy_app.sh | ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} \"REPO_URL=${REPO_URL} bash -s service-b\""
             }
           }
         }
