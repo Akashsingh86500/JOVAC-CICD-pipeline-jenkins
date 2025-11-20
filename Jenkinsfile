@@ -10,13 +10,13 @@ pipeline {
 
         stage('Deploy Service A') {
             steps {
-                build job: 'service-a-deploy'
+                build job: 'service-a-pipeline'
             }
         }
 
         stage('Deploy Service B') {
             steps {
-                build job: 'service-b-deploy'
+                build job: 'service-b-pipeline'
             }
         }
     }
