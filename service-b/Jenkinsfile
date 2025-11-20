@@ -12,16 +12,22 @@ pipeline {
       steps { checkout scm }
     }
 
-    stage('Install Node Modules') {
-      steps { sh 'npm ci' }
+    stage('Create Python venv & Install Requirements') {
+      steps {
+        sh '''
+          python3 -m venv .venv
+          . .venv/bin/activate
+          pip install -r requirements.txt
+        '''
+      }
     }
 
-    stage('Deploy service-a') {
+    stage('Deploy service-b') {
       steps {
         sshagent(credentials: [env.SSH_CREDENTIALS_ID]) {
           sh """
             ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \
-            \\"REPO_URL=${REPO_URL} bash -s service-a\\" < scripts/deploy_app.sh
+            \\"REPO_URL=${REPO_URL} bash -s service-b\\" < scripts/deploy_app.sh
           """
         }
       }
