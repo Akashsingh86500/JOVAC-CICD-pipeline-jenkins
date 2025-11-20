@@ -13,7 +13,11 @@ pipeline {
     }
 
     stage('Install Node Modules') {
-      steps { sh 'npm install' }
+      steps { 
+        dir('service-a') {
+          sh 'npm install'
+        }
+      }
     }
 
     stage('Deploy service-a') {
