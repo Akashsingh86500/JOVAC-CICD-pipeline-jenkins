@@ -3,49 +3,23 @@ set -e
 
 # Must run as root
 if [ "$EUID" -ne 0 ]; then
+  echo "Running with sudo..."
   exec sudo bash "$0" "$@"
 fi
 
+echo "Updating system packages..."
 apt-get update -y
-apt-get install -y git nodejs npm python3 python3-venv
 
+echo "Installing required packages..."
+apt-get install -y git python3 python3-venv python3-pip nodejs npm
+
+# Ensure corepack for npm is enabled
+if ! command -v npm >/dev/null 2>&1; then
+  corepack enable npm || true
+fi
+
+# Create /opt directory for deployments
 mkdir -p /opt
 chown ubuntu:ubuntu /opt
 
-# service-a systemd unit
-cat > /etc/systemd/system/service-a.service <<EOF
-[Unit]
-Description=service-a Node.js app
-After=network.target
-
-[Service]
-Type=simple
-User=ubuntu
-WorkingDirectory=/opt/service-a/service-a
-ExecStart=/usr/bin/node /opt/service-a/service-a/app.js
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# service-b systemd unit
-cat > /etc/systemd/system/service-b.service <<EOF
-[Unit]
-Description=service-b Python app
-After=network.target
-
-[Service]
-Type=simple
-User=ubuntu
-WorkingDirectory=/opt/service-b/service-b
-ExecStart=/opt/service-b/service-b/.venv/bin/python /opt/service-b/service-b/app.py
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable service-a
-systemctl enable service-b
+echo "System setup complete."
