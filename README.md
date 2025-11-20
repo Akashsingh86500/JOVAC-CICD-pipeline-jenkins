@@ -7,8 +7,20 @@ Free-tier AWS resources:
 
 Setup summary:
 1. Create an EC2 instance (Amazon Linux 2 or Ubuntu) and run `scripts/jenkins_setup.sh` as root.
+<<<<<<< HEAD
 2. Create a Jenkins pipeline job pointing to this repository and set environment variables: EC2_HOST, SSH_CREDENTIALS_ID, REPO_URL.
 3. Install GitHub repository deploy key or use Jenkins credentials for SSH.
 4. Run the pipeline. Jenkins will build both services and SSH to the EC2 host to run `scripts/deploy_app.sh service-a` and `service-b`.
 
 Notes: replace placeholders in `scripts/deploy_app.sh` and the `Jenkinsfile` with your GitHub repo and Jenkins credential IDs.
+=======
+2. Create a Jenkins pipeline job pointing to this repository and set environment variables: `EC2_HOST`, `SSH_CREDENTIALS_ID`, and (optionally) `REPO_URL`.
+	- Example: `EC2_HOST=1.2.3.4`, `SSH_CREDENTIALS_ID=my-ec2-ssh-key`, `REPO_URL=https://github.com/your-org/your-repo.git`
+3. Install a GitHub repository deploy key or add your EC2 SSH key to Jenkins credentials (type: SSH Username with private key).
+4. Run the pipeline. Jenkins will build both services and SSH to the EC2 host to run `scripts/deploy_app.sh service-a` and `scripts/deploy_app.sh service-b`.
+
+Notes:
+- `scripts/deploy_app.sh` now reads `REPO_URL` from the environment if provided; otherwise it falls back to the repository's default URL. You can set `REPO_URL` in the Jenkins pipeline environment to point to a fork or a private repo.
+- The deployment scripts assume the EC2 remote user is `ec2-user` (Amazon Linux). If your instance uses `ubuntu` (Ubuntu AMIs), update the `Jenkinsfile` SSH target or the `scripts/deploy_app.sh` usage accordingly.
+- `service-b/requirements.txt` has been added (Flask and flask-cors). Ensure `service-b`'s `requirements.txt` matches your production dependencies.
+>>>>>>> f559f02e41e463bf888a99a62c8709e28cbcd60e

@@ -1,9 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Usage: ./deploy_app.sh <service-name> [repo-url]
-# or export REPO_URL and run: REPO_URL=... ./deploy_app.sh <service-name>
-
 SERVICE=${1:-}
 REPO_URL=${REPO_URL:-${2:-}}
 
@@ -42,14 +39,12 @@ if [ "$SERVICE" = "service-a" ]; then
     systemctl daemon-reload || true
     systemctl restart service-a || systemctl start service-a || true
   else
-    # fallback: run in background using nohup
     pkill -f "node .*${SERVICE}/app.js" || true
     nohup node app.js > /var/log/${SERVICE}.log 2>&1 &
   fi
 elif [ "$SERVICE" = "service-b" ]; then
   echo "Installing service-b dependencies and restarting"
   python3 -m venv .venv || true
-  # shellcheck disable=SC1091
   . .venv/bin/activate
   pip install -r requirements.txt
   if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then

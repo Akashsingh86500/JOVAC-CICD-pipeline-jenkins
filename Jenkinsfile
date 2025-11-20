@@ -1,6 +1,8 @@
 pipeline {
+  agent any
+
   environment {
-    EC2_HOST = '54.252.194.194'
+    EC2_HOST = '3.27.239.46'
     SSH_CREDENTIALS_ID = 'EC2_PEM_KEY'
     REPO_URL = 'https://github.com/Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git'
   }
@@ -65,11 +67,11 @@ pipeline {
         sshagent (credentials: [env.SSH_CREDENTIALS_ID]) {
           script {
             if (isUnix()) {
-              sh "ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} 'REPO_URL=${REPO_URL} bash -s' < scripts/deploy_app.sh service-a"
-              sh "ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} 'REPO_URL=${REPO_URL} bash -s' < scripts/deploy_app.sh service-b"
+              sh "ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \"REPO_URL=${REPO_URL} bash -s\" < scripts/deploy_app.sh service-a"
+              sh "ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \"REPO_URL=${REPO_URL} bash -s\" < scripts/deploy_app.sh service-b"
             } else {
-              bat "type scripts\\deploy_app.sh | ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} \"REPO_URL=${REPO_URL} bash -s\""
-              bat "type scripts\\deploy_app.sh | ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} \"REPO_URL=${REPO_URL} bash -s service-b\""
+              bat "type scripts\\deploy_app.sh | ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \"REPO_URL=${REPO_URL} bash -s service-a\""
+              bat "type scripts\\deploy_app.sh | ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \"REPO_URL=${REPO_URL} bash -s service-b\""
             }
           }
         }

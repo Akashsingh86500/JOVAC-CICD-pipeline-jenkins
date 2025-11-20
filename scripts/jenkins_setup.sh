@@ -1,17 +1,23 @@
 #!/bin/bash
 set -e
 
-# Re-run with sudo if not root
+# Escalate to root if needed (for piped stdin, use bash -c)
 if [ "$EUID" -ne 0 ]; then
-  echo "Not running as root — re-running with sudo"
-  exec sudo bash "$0" "$@"
+  echo "Escalating to root..."
+  exec sudo bash -c "$(cat); $(printf '%s\n' "$@")"
 fi
 
 apt-get update || yum update -y || true
 if command -v apt-get >/dev/null 2>&1; then
-  apt-get install -y git nodejs npm python3 python3-venv
+  apt-get install -y git nodejs python3 python3-venv || true
+  apt-get install -y npm || true
 else
-  yum install -y git nodejs npm python3
+  yum install -y git nodejs npm python3 || true
+fi
+
+# Enable npm via corepack if npm not available
+if ! command -v npm >/dev/null 2>&1; then
+  corepack enable npm || true
 fi
 
 mkdir -p /opt
