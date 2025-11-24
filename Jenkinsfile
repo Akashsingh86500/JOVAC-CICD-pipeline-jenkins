@@ -1,9 +1,20 @@
 pipeline {
     agent any
 
+    environment {
+        EC2_HOST = '3.27.239.46'
+        SSH_CREDENTIALS_ID = 'EC2_PEM_KEY'
+        REPO_URL = 'git@github.com:Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git'
+    }
+
     stages {
+
         stage('Checkout') {
-            steps { checkout scm }
+            steps {
+                echo "Fetching latest source code..."
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']],
+                userRemoteConfigs: [[url: env.REPO_URL, credentialsId: env.SSH_CREDENTIALS_ID]]])
+            }
         }
 
         stage('Deploy Service A') {
@@ -16,6 +27,15 @@ pipeline {
             steps {
                 build job: 'service-b-pipeline', propagate: true
             }
+        }
+    }
+
+    post {
+        success {
+            echo "🔥 Deployment Completed Successfully!"
+        }
+        failure {
+            echo "❌ Deployment Failed. Check Logs!"
         }
     }
 }
