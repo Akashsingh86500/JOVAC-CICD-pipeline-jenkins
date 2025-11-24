@@ -2,30 +2,61 @@ pipeline {
     agent any
 
     environment {
-        EC2_HOST = '3.27.239.46'
+        EC2_HOST = '13.54.221.81'
+        SSH_CREDENTIALS_ID = 'EC2_PEM_KEY'
         GITHUB_CREDENTIALS_ID = 'GITHUB_RSA_KEY'
         REPO_URL = 'git@github.com:Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git'
     }
 
     stages {
-
         stage('Checkout') {
-    steps {
-        echo 'Fetching latest source code...'
-        checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
-                  userRemoteConfigs: [[credentialsId: 'GITHUB_RSA_KEY', url: 'git@github.com:Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git']]])
-    }
-}
-
-        stage('Deploy Service A') {
             steps {
-                build job: 'service-a-pipeline', propagate: true
+                echo 'Fetching latest source code...'
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        credentialsId: env.GITHUB_CREDENTIALS_ID,
+                        url: env.REPO_URL
+                    ]]
+                ])
             }
         }
 
-        stage('Deploy Service B') {
+        stage('Build & Deploy Service A') {
             steps {
-                build job: 'service-b-pipeline', propagate: true
+                dir('service-a') {
+                    echo 'Installing Node modules...'
+                    sh 'npm install'
+                }
+
+                echo 'Deploying service-a...'
+                sshagent(credentials: [env.SSH_CREDENTIALS_ID]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \
+                        "REPO_URL=${REPO_URL} bash -s service-a" < scripts/deploy_app.sh
+                    """
+                }
+            }
+        }
+
+        stage('Build & Deploy Service B') {
+            steps {
+                dir('service-b') {
+                    echo 'Setting up Python venv & installing requirements...'
+                    sh '''
+                        python3 -m venv .venv
+                        . .venv/bin/activate
+                        pip install -r requirements.txt
+                    '''
+                }
+
+                echo 'Deploying service-b...'
+                sshagent(credentials: [env.SSH_CREDENTIALS_ID]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \
+                        "REPO_URL=${REPO_URL} bash -s service-b" < scripts/deploy_app.sh
+                    """
+                }
             }
         }
     }
