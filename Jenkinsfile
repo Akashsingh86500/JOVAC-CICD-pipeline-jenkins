@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         EC2_HOST = '3.27.239.46'
-        GITHUB_CREDENTIALS_ID = 'GITHUB_SSH_KEY'
+        GITHUB_CREDENTIALS_ID = 'GITHUB_RSA_KEY'
         REPO_URL = 'git@github.com:Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git'
     }
 
