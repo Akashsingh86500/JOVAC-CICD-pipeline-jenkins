@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         EC2_HOST = '3.27.239.46'
-        SSH_CREDENTIALS_ID = 'EC2_PEM_KEY'
+        GITHUB_CREDENTIALS_ID = 'GITHUB_SSH_KEY'
         REPO_URL = 'git@github.com:Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git'
     }
 
@@ -13,7 +13,7 @@ pipeline {
             steps {
                 echo "Fetching latest source code..."
                 checkout([$class: 'GitSCM', branches: [[name: '*/main']],
-                userRemoteConfigs: [[url: env.REPO_URL, credentialsId: env.SSH_CREDENTIALS_ID]]])
+                userRemoteConfigs: [[url: env.REPO_URL, credentialsId: env.GITHUB_CREDENTIALS_ID]]])
             }
         }
 
