@@ -4,8 +4,8 @@ pipeline {
     environment {
         EC2_HOST = '13.54.221.81'
         SSH_CREDENTIALS_ID = 'EC2_PEM_KEY'
-        GITHUB_CREDENTIALS_ID = 'GITHUB_RSA_KEY'
-        REPO_URL = 'git@github.com:Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git'
+        GITHUB_CREDENTIALS_ID = 'GITHUB_HTTPS_CRED'
+        REPO_URL = 'https://github.com/Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git'
     }
 
     stages {
