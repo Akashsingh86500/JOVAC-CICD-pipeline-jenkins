@@ -10,12 +10,12 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            steps {
-                echo "Fetching latest source code..."
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']],
-                userRemoteConfigs: [[url: env.REPO_URL, credentialsId: env.GITHUB_CREDENTIALS_ID]]])
-            }
-        }
+    steps {
+        echo 'Fetching latest source code...'
+        checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
+                  userRemoteConfigs: [[credentialsId: 'GITHUB_RSA_KEY', url: 'git@github.com:Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git']]])
+    }
+}
 
         stage('Deploy Service A') {
             steps {
