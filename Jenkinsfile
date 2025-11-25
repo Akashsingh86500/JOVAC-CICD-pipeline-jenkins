@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        EC2_HOST = '13.54.221.81'
+        EC2_HOST = '44.221.77.210'
         SSH_CREDENTIALS_ID = 'EC2_PEM_KEY'
         GITHUB_CREDENTIALS_ID = 'GITHUB_HTTPS_CRED'
         REPO_URL = 'https://github.com/Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git'

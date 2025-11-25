@@ -1,0 +1,109 @@
+# Step-by-Step CI/CD Setup Commands
+# Run these in your WSL terminal
+
+# ============================================
+# STEP 1: Get EC2 Instance IP
+# ============================================
+# Option A: If you already have an EC2 instance
+aws ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId,PublicIpAddress,State.Name]" --output table
+
+# Option B: Launch new EC2 instance
+# Go to AWS Console → EC2 → Launch Instance
+# - Ubuntu 22.04 LTS
+# - t2.micro (Free Tier)
+# - Create/Select Key Pair (save .pem file)
+# - Security Group: Allow SSH (22), HTTP (80), Jenkins (8080)
+# - Launch
+
+# ============================================
+# STEP 2: Update Jenkinsfile with your EC2 IP
+# ============================================
+# Edit Jenkinsfile and change EC2_HOST to your IP
+# Or use sed:
+sed -i "s/EC2_HOST = '.*'/EC2_HOST = 'YOUR_EC2_IP'/" Jenkinsfile
+
+# ============================================
+# STEP 3: Setup Jenkins on EC2
+# ============================================
+# Replace YOUR_EC2_IP and /path/to/key.pem with your values
+
+# Upload setup scripts
+scp -i /path/to/your-key.pem scripts/setup_jenkins.sh ubuntu@YOUR_EC2_IP:/tmp/
+scp -i /path/to/your-key.pem scripts/setup_services.sh ubuntu@YOUR_EC2_IP:/tmp/
+scp -i /path/to/your-key.pem scripts/deploy_app.sh ubuntu@YOUR_EC2_IP:/tmp/
+
+# SSH into EC2 and run setup
+ssh -i /path/to/your-key.pem ubuntu@YOUR_EC2_IP
+# Then on EC2:
+sudo bash /tmp/setup_jenkins.sh
+
+# Get Jenkins admin password
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+# Exit EC2
+exit
+
+# ============================================
+# STEP 4: Configure Jenkins (Browser)
+# ============================================
+# 1. Open: http://YOUR_EC2_IP:8080
+# 2. Enter admin password (from step 3)
+# 3. Install suggested plugins
+# 4. Create admin user
+
+# ============================================
+# STEP 5: Add Jenkins Credentials
+# ============================================
+# In Jenkins UI:
+# Manage Jenkins → Credentials → System → Global credentials → Add Credentials
+
+# A. GitHub Credentials:
+#    - Kind: Username with password
+#    - Username: Your GitHub username
+#    - Password: GitHub Personal Access Token
+#    - ID: GITHUB_HTTPS_CRED
+#    - Description: GitHub HTTPS Credentials
+
+# B. SSH Credentials:
+#    - Kind: SSH Username with private key
+#    - Username: ubuntu
+#    - Private Key: Enter directly
+#    - Paste content of your .pem key file
+#    - ID: EC2_PEM_KEY
+#    - Description: EC2 SSH Key
+
+# ============================================
+# STEP 6: Create Pipeline Job
+# ============================================
+# In Jenkins UI:
+# 1. New Item → Pipeline
+# 2. Name: JOVAC-CICD-Pipeline
+# 3. Pipeline Definition: Pipeline script from SCM
+# 4. SCM: Git
+# 5. Repository URL: https://github.com/Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git
+# 6. Credentials: GITHUB_HTTPS_CRED
+# 7. Branch: */main
+# 8. Script Path: Jenkinsfile
+# 9. Save
+
+# ============================================
+# STEP 7: Configure GitHub Webhook
+# ============================================
+# 1. GitHub → Repository → Settings → Webhooks → Add webhook
+# 2. Payload URL: http://YOUR_EC2_IP:8080/github-webhook/
+# 3. Content type: application/json
+# 4. Events: Just the push event
+# 5. Active: ✓
+# 6. Add webhook
+
+# ============================================
+# STEP 8: Test the Pipeline
+# ============================================
+# Make a change and push:
+git add .
+git commit -m "Test CI/CD pipeline"
+git push origin main
+
+# Jenkins will automatically build and deploy!
+
+

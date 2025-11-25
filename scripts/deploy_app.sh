@@ -1,96 +1,119 @@
 #!/bin/bash
 set -e
 
+# $1 comes from Jenkins (e.g., "service-a")
 SERVICE=${1:-}
 REPO_URL=${REPO_URL:-"https://github.com/Akashsingh86500/JOVAC-CICD-pipeline-jenkins.git"}
 
 if [ -z "$SERVICE" ]; then
-  echo "Usage: $0 <service-name>"
+  echo "❌ Error: Usage: $0 <service-name>"
   exit 1
 fi
 
-WORKDIR="/opt/$SERVICE"
+# Use home directory to avoid permission issues with Git
+# Detect current user (works for both ubuntu on EC2 and other users)
+# If DEPLOY_USER is not set, try to detect from environment or default to ubuntu
+if [ -z "$DEPLOY_USER" ]; then
+  if [ -n "$USER" ]; then
+    DEPLOY_USER="$USER"
+  elif [ -n "$SUDO_USER" ]; then
+    DEPLOY_USER="$SUDO_USER"
+  else
+    DEPLOY_USER="ubuntu"
+  fi
+fi
+BASE_DIR="/home/$DEPLOY_USER/deployments"
+WORKDIR="$BASE_DIR/$SERVICE"
 
-# Clone or update repository
+echo "🚀 Deploying $SERVICE to $WORKDIR..."
+
+# 1. Prepare Directory & Git
+mkdir -p "$BASE_DIR"
+
 if [ ! -d "$WORKDIR" ]; then
-  echo "Cloning $REPO_URL into $WORKDIR"
+  echo "🔹 Cloning repo..."
   git clone "$REPO_URL" "$WORKDIR"
 fi
 
 cd "$WORKDIR"
+echo "🔹 Pulling latest code..."
 git fetch --all --prune
-git reset --hard origin/HEAD
+git reset --hard origin/main  # Changed from HEAD to origin/main to be safer
 
+# Verify the service folder exists inside the repo
 if [ ! -d "$WORKDIR/$SERVICE" ]; then
-  echo "Expected project layout: repo root must contain $SERVICE folder"
+  echo "❌ Error: Expected folder '$SERVICE' not found inside repo!"
+  ls -la "$WORKDIR"
   exit 1
 fi
 
+# Enter the actual service folder (e.g., service-a/service-a)
 cd "$WORKDIR/$SERVICE"
 
 # Load .env if exists
 if [ -f ".env" ]; then
+  echo "🔹 Loading .env file..."
   export $(grep -v '^#' .env | xargs)
 fi
 
+# 2. Service Logic
 if [ "$SERVICE" = "service-a" ]; then
-  echo "Deploying service-a..."
-  npm ci
+  echo "📦 Building Node.js Service..."
+  npm install
 
-  # Create systemd unit if it does not exist
-  if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    cat > /etc/systemd/system/service-a.service <<EOF
+  # Create Systemd Service (Requires Sudo)
+  echo "🔹 Configuring Systemd for $SERVICE..."
+  
+  # We use 'sudo tee' to write to protected /etc/ folder
+  sudo tee /etc/systemd/system/$SERVICE.service > /dev/null <<EOF
 [Unit]
-Description=service-a Node.js app
+Description=$SERVICE Node.js app
 After=network.target
 
 [Service]
 Type=simple
-User=ubuntu
+User=$DEPLOY_USER
 WorkingDirectory=$WORKDIR/$SERVICE
 ExecStart=/usr/bin/node $WORKDIR/$SERVICE/app.js
 Restart=always
+# Environment variables can be added here if needed
+# Environment=NODE_ENV=production
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    systemctl daemon-reload
-    systemctl enable service-a
-    systemctl restart service-a || systemctl start service-a
-  else
-    pkill -f "node .*app.js" || true
-    nohup node app.js > /var/log/service-a.log 2>&1 &
-  fi
+  echo "🔹 Restarting Systemd Service..."
+  sudo systemctl daemon-reload
+  sudo systemctl enable $SERVICE
+  sudo systemctl restart $SERVICE
 
 elif [ "$SERVICE" = "service-b" ]; then
-  echo "Deploying service-b..."
+  echo "🐍 Building Python Service..."
 
-  # Ensure virtual environment
+  # Setup Python Venv
   if [ ! -d ".venv" ]; then
     python3 -m venv .venv
   fi
 
-  # Activate venv
   source .venv/bin/activate
-
   pip install --upgrade pip
+  
   if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt
-  else
-    echo "Warning: requirements.txt not found, skipping pip install"
   fi
 
-  # Create systemd unit if it does not exist
-  if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    cat > /etc/systemd/system/service-b.service <<EOF
+  # Create Systemd Service (Requires Sudo)
+  echo "🔹 Configuring Systemd for $SERVICE..."
+
+  sudo tee /etc/systemd/system/$SERVICE.service > /dev/null <<EOF
 [Unit]
-Description=service-b Python app
+Description=$SERVICE Python app
 After=network.target
 
 [Service]
 Type=simple
-User=ubuntu
+User=$DEPLOY_USER
 WorkingDirectory=$WORKDIR/$SERVICE
 ExecStart=$WORKDIR/$SERVICE/.venv/bin/python $WORKDIR/$SERVICE/app.py
 Restart=always
@@ -99,17 +122,14 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-    systemctl daemon-reload
-    systemctl enable service-b
-    systemctl restart service-b || systemctl start service-b
-  else
-    pkill -f "python .*app.py" || true
-    nohup .venv/bin/python app.py > /var/log/service-b.log 2>&1 &
-  fi
+  echo "🔹 Restarting Systemd Service..."
+  sudo systemctl daemon-reload
+  sudo systemctl enable $SERVICE
+  sudo systemctl restart $SERVICE
 
 else
-  echo "Unknown service: $SERVICE"
+  echo "❌ Unknown service: $SERVICE"
   exit 2
 fi
 
-echo "Deployment of $SERVICE completed."
+echo "✅ Deployment of $SERVICE completed successfully."
