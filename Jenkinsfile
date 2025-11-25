@@ -30,9 +30,10 @@ pipeline {
                 }
 
                 echo 'Deploying service-a...'
-                sshagent(credentials: [env.SSH_CREDENTIALS_ID]) {
+                withCredentials([sshUserPrivateKey(credentialsId: env.SSH_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \
+                        chmod 600 \$SSH_KEY
+                        ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \${SSH_USER}@${EC2_HOST} \
                         "REPO_URL=${REPO_URL} bash -s service-a" < scripts/deploy_app.sh
                     """
                 }
@@ -51,9 +52,10 @@ pipeline {
                 }
 
                 echo 'Deploying service-b...'
-                sshagent(credentials: [env.SSH_CREDENTIALS_ID]) {
+                withCredentials([sshUserPrivateKey(credentialsId: env.SSH_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \
+                        chmod 600 \$SSH_KEY
+                        ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \${SSH_USER}@${EC2_HOST} \
                         "REPO_URL=${REPO_URL} bash -s service-b" < scripts/deploy_app.sh
                     """
                 }
