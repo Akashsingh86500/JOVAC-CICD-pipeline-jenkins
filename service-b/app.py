@@ -6,7 +6,7 @@ CORS(app)
 
 @app.route('/')
 def index():
-    return 'hello from service-b'
+    return 'hello from service-b GROUP 3'
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
