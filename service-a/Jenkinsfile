@@ -15,7 +15,6 @@ pipeline {
         stage('Deploy service-a') {
             steps {
                 sshagent(credentials: [env.SSH_CREDENTIALS_ID]) {
-                    // Reads the script from the root 'scripts' folder and executes it on EC2
                     sh """
                         ssh -o StrictHostKeyChecking=no ubuntu@${EC2_HOST} \
                         "REPO_URL=${REPO_URL} bash -s service-a" < scripts/deploy_app.sh
